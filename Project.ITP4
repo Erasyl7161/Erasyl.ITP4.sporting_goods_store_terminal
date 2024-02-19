@@ -1,0 +1,207 @@
+import json
+import csv
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import filedialog
+
+# Класс для представления отдельного товара
+class Goods:
+    def __init__(self, name, category, price, quantity):
+        self.name = name
+        self.category = category
+        self.price = price
+        self.quantity = quantity
+
+# Класс для представления магазина
+class Store:
+    def __init__(self):
+        self.goods_list = []
+
+    # Метод для добавления товаров в магазин
+    def add_goods(self, name, category, price, quantity):
+        goods = Goods(name, category, price, quantity)
+        self.goods_list.append(goods)
+
+    # Метод для поиска товаров по категории
+    def find_goods_by_category(self, category):
+        found_goods = [goods for goods in self.goods_list if goods.category == category]
+        return found_goods
+
+    # Метод для отображения всех товаров в магазине
+    def display_all_goods(self):
+        return self.goods_list
+
+    # Метод для сохранения данных о товарах в файл JSON
+    def save_to_json(self):
+        goods_data = []
+        for goods in self.goods_list:
+            goods_data.append({
+                'name': goods.name,
+                'category': goods.category,
+                'price': goods.price,
+                'quantity': goods.quantity
+            })
+
+        with open('goods.json', 'w') as f:
+            json.dump(goods_data, f)
+        messagebox.showinfo("Информация", "Товары сохранены в файл JSON 'goods.json'.")
+
+    # Метод для сохранения данных о товарах в файл CSV
+    def save_to_csv(self):
+        with open('goods.csv', 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Name', 'Category', 'Price', 'Quantity'])
+            for goods in self.goods_list:
+                writer.writerow([goods.name, goods.category, goods.price, goods.quantity])
+        messagebox.showinfo("Информация", "Товары сохранены в файл CSV 'goods.csv'.")
+
+    # Метод для подсчета общего количества товаров в магазине
+    def calculate_total_goods(self):
+        return len(self.goods_list)
+
+    # Метод для подсчета общей стоимости товаров в магазине
+    def calculate_inventory_value(self):
+        return sum(goods.price * goods.quantity for goods in self.goods_list)
+
+# Класс для GUI
+class GUI:
+    def __init__(self, root):
+        self.root = root
+        self.store = Store()
+        self.setup_gui()
+
+    # Метод для настройки GUI
+    def setup_gui(self):
+        self.root.title("Спортивный магазин")
+        self.root.geometry("400x400")
+
+        # Метка для заголовка
+        self.label = tk.Label(self.root, text="Спортивный магазин")
+        self.label.pack()
+
+        # Кнопки для различных операций
+        self.add_button = tk.Button(self.root, text="Добавить товар", command=self.add_goods)
+        self.add_button.pack()
+
+        self.find_button = tk.Button(self.root, text="Найти товар по категории", command=self.find_goods)
+        self.find_button.pack()
+
+        self.display_button = tk.Button(self.root, text="Отобразить все товары", command=self.display_goods)
+        self.display_button.pack()
+
+        self.save_json_button = tk.Button(self.root, text="Сохранить данные о товарах в JSON", command=self.save_to_json)
+        self.save_json_button.pack()
+
+        self.save_csv_button = tk.Button(self.root, text="Сохранить данные о товарах в CSV", command=self.save_to_csv)
+        self.save_csv_button.pack()
+
+        self.stats_button = tk.Button(self.root, text="Показать статистику", command=self.show_statistics)
+        self.stats_button.pack()
+
+        self.exit_button = tk.Button(self.root, text="Выход", command=self.root.quit)
+        self.exit_button.pack()
+
+    # Метод для добавления товаров
+    def add_goods(self):
+        add_window = tk.Toplevel(self.root)
+        add_window.title("Добавить товар")
+
+        # Поля ввода для деталей товара
+        name_label = tk.Label(add_window, text="Название:")
+        name_label.grid(row=0, column=0)
+        self.name_entry = tk.Entry(add_window)
+        self.name_entry.grid(row=0, column=1)
+
+        category_label = tk.Label(add_window, text="Категория:")
+        category_label.grid(row=1, column=0)
+        self.category_entry = tk.Entry(add_window)
+        self.category_entry.grid(row=1, column=1)
+
+        price_label = tk.Label(add_window, text="Цена:")
+        price_label.grid(row=2, column=0)
+        self.price_entry = tk.Entry(add_window)
+        self.price_entry.grid(row=2, column=1)
+
+        quantity_label = tk.Label(add_window, text="Количество:")
+        quantity_label.grid(row=3, column=0)
+        self.quantity_entry = tk.Entry(add_window)
+        self.quantity_entry.grid(row=3, column=1)
+
+        # Кнопка для добавления товара
+        add_button = tk.Button(add_window, text="Добавить товар", command=self.add_goods_to_store)
+        add_button.grid(row=4, columnspan=2)
+
+    # Метод для добавления товаров в магазин
+    def add_goods_to_store(self):
+        name = self.name_entry.get()
+        category = self.category_entry.get()
+        price = self.price_entry.get()
+        quantity = self.quantity_entry.get()
+
+        if not name or not category or not price or not quantity:
+            messagebox.showerror("Ошибка", "Пожалуйста, заполните все поля.")
+            return
+
+        try:
+            price = float(price)
+            quantity = int(quantity)
+            self.store.add_goods(name, category, price, quantity)
+            messagebox.showinfo("Информация", "Товар успешно добавлен!")
+        except ValueError:
+            messagebox.showerror("Ошибка", "Цена и количество должны быть числовыми.")
+
+    # Метод для поиска товаров по категории
+    def find_goods(self):
+        find_window = tk.Toplevel(self.root)
+        find_window.title("Найти товар по категории")
+
+        category_label = tk.Label(find_window, text="Категория:")
+        category_label.grid(row=0, column=0)
+        self.category_entry = tk.Entry(find_window)
+        self.category_entry.grid(row=0, column=1)
+
+        find_button = tk.Button(find_window, text="Найти товар", command=self.find_goods_by_category)
+        find_button.grid(row=1, columnspan=2)
+
+    # Метод для поиска товаров по категории
+    def find_goods_by_category(self):
+        category = self.category_entry.get()
+        found_goods = self.store.find_goods_by_category(category)
+        if found_goods:
+            messagebox.showinfo("Найденные товары", "\n".join([f"Название: {goods.name}, Категория: {goods.category}, Цена: {goods.price}, Количество: {goods.quantity}" for goods in found_goods]))
+        else:
+            messagebox.showinfo("Информация", "Товары в данной категории не найдены.")
+
+    # Метод для отображения всех товаров
+    def display_goods(self):
+        display_window = tk.Toplevel(self.root)
+        display_window.title("Отобразить все товары")
+
+        all_goods = self.store.display_all_goods()
+        display_label = tk.Label(display_window, text="\n".join([f"Название: {goods.name}, Категория: {goods.category}, Цена: {goods.price}, Количество: {goods.quantity}" for goods in all_goods]))
+        display_label.pack()
+
+
+
+# Метод для сохранения данных о товарах в файл JSON
+    def save_to_json(self):
+        self.store.save_to_json()
+
+    # Метод для сохранения данных о товарах в файл CSV
+    def save_to_csv(self):
+        self.store.save_to_csv()
+
+    # Метод для отображения статистики
+    def show_statistics(self):
+        total_goods = self.store.calculate_total_goods()
+        inventory_value = self.store.calculate_inventory_value()
+        messagebox.showinfo("Статистика", f"Всего товаров: {total_goods}\nОбщая стоимость запасов: ${inventory_value:.2f}")
+
+# Основная функция
+if __name__ == "__main__":
+    # Создание главного окна приложения
+    root = tk.Tk()
+    # Создание экземпляра GUI
+    app = GUI(root)
+    # Запуск главного цикла событий
+    root.mainloop()
